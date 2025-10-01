@@ -3,7 +3,7 @@ public class MimicParams
 {
     public string? InputFastaPath { get; set; }
     public string? OutputFastaPath { get; set; }
-    public int MultFactor { get; set; } = 1;
+    public int MultFactor { get; set; } = 9;
     public bool NoDigest { get; set; } = true;
     public int TerminalResiduesToRetain { get; set; } = 0;
 
@@ -18,6 +18,6 @@ public class MimicParams
         if (string.IsNullOrWhiteSpace(OutputFastaPath))
             throw new ArgumentException("OutputFastaPath is required for MimicParams");
 
-        return $"\"{InputFastaPath}\" -o \"{OutputFastaPath}\" -m {MultFactor} {(NoDigest ? "-N" : "")} -T {TerminalResiduesToRetain} -A -e --replaceI";
+        return $"\"{InputFastaPath}\" -A -e -o \"{OutputFastaPath}\" -m {MultFactor} {(NoDigest ? "-N" : "")} -T {TerminalResiduesToRetain} --replaceI";
     }
 }

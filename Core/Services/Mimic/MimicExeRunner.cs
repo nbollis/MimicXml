@@ -33,7 +33,6 @@ public class MimicExeRunner : IMimicExeRunner
         if (!File.Exists(arguments.InputFastaPath))
             throw new FileNotFoundException($"Input FASTA file does not exist: {arguments.InputFastaPath}");
 
-
         using var process = new Process();
         process.StartInfo = new ProcessStartInfo
         {
@@ -42,7 +41,7 @@ public class MimicExeRunner : IMimicExeRunner
             RedirectStandardOutput = false,
             RedirectStandardError = false,
             UseShellExecute = false,
-            CreateNoWindow = true
+            CreateNoWindow = false, 
         };
 
         process.Start();

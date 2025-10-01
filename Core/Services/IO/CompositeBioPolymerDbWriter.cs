@@ -28,7 +28,7 @@ public class CompositeBioPolymerDbWriter : BaseService, IBioPolymerDbWriter
         switch (fileType)
         {
             case BioPolymerDbFileType.ProteinFasta:
-                ProteinDbWriter.WriteFastaDatabase(bioPolymers.Cast<Protein>().ToList(), outputPath, " ");
+                ProteinDbWriter.WriteFastaDatabase(bioPolymers.Cast<Protein>().ToList(), outputPath, "|");
                 break;
 
             case BioPolymerDbFileType.ProteinXml:

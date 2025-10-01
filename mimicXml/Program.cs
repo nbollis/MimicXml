@@ -40,6 +40,7 @@ public class Program
         var fileDetection = AppHost.GetService<IFileTypeDetectionService>();
         var digProvider = AppHost.GetService<IDigestionParamsProvider>();
         var generator = AppHost.GetService<EntrapmentXmlGenerator>();
+        var cleanup = AppHost.GetService<ITempFileCleanupService>();
         generator.Verbose = options.Verbose;
 
         // Determine file type and get digestion params
@@ -48,6 +49,7 @@ public class Program
 
         // If entrapment fasta path is null, generate it ourselves. 
         string? tempFastaPath = null;
+        string? tempMimicOutputPath = null;
         if (options.EntrapmentFastaPath is null)
         {
             Logger.WriteLine("Generating entrapment fasta...");
@@ -58,12 +60,17 @@ public class Program
             var fileName = Path.GetFileNameWithoutExtension(options.StartingXmlPath);
             var tempPath = Path.GetTempPath();
             tempFastaPath = Path.Combine(tempPath, $"{fileName}_entrapment.fasta");
+            tempMimicOutputPath = Path.Combine(tempPath, $"{fileName}_mimic_output.fasta");
 
             // Convert XML to FASTA
+            Logger.WriteLine("Converting target XML to FASTA...", 2);
             var bioPolymers = reader.Load(options.StartingXmlPath, null!).ToList();
             writer.Write(bioPolymers, tempFastaPath);
 
             // Run mimic
+            Logger.WriteLine("Running mimic...", 2);
+            options.MimicParams.InputFastaPath = tempFastaPath;
+            options.MimicParams.OutputFastaPath = tempMimicOutputPath;
             var res = mimic.RunAsync(options.MimicParams).Result;
             options.EntrapmentFastaPath = res.EntrapmentPath;
         }
@@ -71,22 +78,13 @@ public class Program
         Logger.WriteLine("Generating mimic xml...");
         generator.GenerateXml(options.StartingXmlPath, options.EntrapmentFastaPath, options.GenerateModificationHistogram, options.GenerateDigestionProductHistogram, digParams, options.OutputXmlPath);
 
-        // Clean up temp fasta if we created one
-        if (tempFastaPath is not null && File.Exists(tempFastaPath))
-        {
-            try
-            {
-                File.Delete(tempFastaPath);
-            }
-            catch (Exception ex)
-            {
-                Logger.WriteLine($"Could not delete temporary entrapment fasta at {tempFastaPath}. Please delete it manually.");
-                Logger.WriteLine(ex.Message);
-            }
-        }
+        // Cleanup temp files if we created them
+        cleanup.CleanUpTempFile(tempFastaPath);
+        cleanup.CleanUpTempFile(tempMimicOutputPath);
 
         return 0;
     }
+
 
     private static int DisplayHelp(ParserResult<CommandLineSettings> parserResult, IEnumerable<Error> errs)
     {

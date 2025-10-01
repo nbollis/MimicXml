@@ -29,20 +29,31 @@ internal class CommandLineSettings
     public bool IsTopDown { get; set; } = true;
 
 
-    [Option("mimicMultFactor", Required = false, Default = 1, HelpText = "Determines the number of times the database should be multiplied (Default: 1). Higher values create more entrapment sequences, but take longer to run. If no entrapment database is provided, mimic will run using this parameter.")]
-    public int MimicMultFactor { get; set; } = 1;
+    [Option("mimicMultFactor", Required = false, Default = 9, HelpText = "Determines the number of times the database should be multiplied (Default: 9). Higher values create more entrapment sequences, but take longer to run. If no entrapment database is provided, mimic will run using this parameter.")]
+    public int MimicMultFactor { get; set; } = 9;
 
-    [Option("mimicRetainTerm", Required = false, Default = 1, HelpText = "The number of terminal residues that will be retained if running in top-down mode (Default: 0). If no entrapment database is provided, mimic will run using this parameter.")]
-    public int MimicTerminalResiduesToRetain { get; set; } = 1;
+    [Option("mimicRetainTerm", Required = false, Default = 0, HelpText = "The number of terminal residues that will be retained if running in top-down mode (Default: 0 for Bottom-Up, 4 for Top-Down). If no entrapment database is provided, mimic will run using this parameter.")]
+    public int MimicTerminalResiduesToRetain { get; set; } = 0;
 
     public void ValidateCommandLineSettings()
     {
-        if (!File.Exists(StartingXmlPath))
-            throw new ArgumentException($"Starting XML file does not exist: {StartingXmlPath}");
-        if (!File.Exists(EntrapmentFastaPath))
-            throw new ArgumentException($"Entrapment FASTA file does not exist: {EntrapmentFastaPath}");
+        if (!StartingXmlPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) &&
+            !StartingXmlPath.EndsWith(".xml.gz", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Starting database must be .xml or .xml.gz");
 
-        EntrapmentXmlGenerator.ValidateInputPaths(StartingXmlPath, EntrapmentFastaPath);
+        if (!File.Exists(StartingXmlPath))
+            throw new FileNotFoundException($"Starting XML file does not exist: {StartingXmlPath}");
+
+        if (EntrapmentFastaPath != null 
+            && !EntrapmentFastaPath.EndsWith(".fasta", StringComparison.OrdinalIgnoreCase) 
+            && !EntrapmentFastaPath.EndsWith(".fa", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("Entrapment database must be .fasta or .fa");
+
+        if (EntrapmentFastaPath != null && !File.Exists(EntrapmentFastaPath))
+            throw new FileNotFoundException($"Entrapment FASTA file does not exist: {EntrapmentFastaPath}");
+
+        if (IsTopDown && MimicTerminalResiduesToRetain == 0)
+            MimicTerminalResiduesToRetain = 4; // Default to 4 if top-down and not set
 
         MimicParams = new() 
         { 

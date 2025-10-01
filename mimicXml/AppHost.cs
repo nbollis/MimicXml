@@ -63,6 +63,7 @@ public static class AppHost
 
         // Register MimicExeRunner
         services.AddSingleton<IMimicExeRunner, MimicExeRunner>();
+        services.AddSingleton<ITempFileCleanupService, TempFileCleanupService>();
 
         return services;
     }

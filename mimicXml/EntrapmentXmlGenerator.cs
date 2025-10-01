@@ -22,7 +22,7 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
     {
         var dir = Path.GetDirectoryName(entrapmentFastaPath);
         var filename = Path.GetFileNameWithoutExtension(entrapmentFastaPath);
-        return Path.Combine(dir ?? "", filename + ".xml");
+        return Path.Combine(dir ?? "", filename + "_Entrapment.xml");
     }
 
     /// <summary>
@@ -63,16 +63,16 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
         }
 
         var toWrite = groups.SelectMany(g => g.Entrapments.Select(e => e.BioPolymer)).ToList();
-        outPath ??= GetOutputPath(entrapmentFastaPath);
+        outPath ??= GetOutputPath(startingXmlPath);
         writingService.Write(toWrite, outPath);
 
         // Print entrapment modification distribution for each entrapment fold
         if (writeModHist)
-            histogramService.WriteModificationHistogram(groups, Path.GetDirectoryName(outPath) ?? "", Path.GetFileNameWithoutExtension(entrapmentFastaPath));
+            histogramService.WriteModificationHistogram(groups, Path.GetDirectoryName(outPath) ?? "", Path.GetFileNameWithoutExtension(startingXmlPath));
 
         // Print Digestion Counts
         if (writeDigHist && digParams != null)
-            histogramService.WriteDigestionHistogram(groups, Path.GetDirectoryName(outPath) ?? "", digParams, Path.GetFileNameWithoutExtension(entrapmentFastaPath));
+            histogramService.WriteDigestionHistogram(groups, Path.GetDirectoryName(outPath) ?? "", digParams, Path.GetFileNameWithoutExtension(startingXmlPath));
     }
 
     public static void ValidateInputPaths(string startingXmlPath, string entrapmentFastaPath)
