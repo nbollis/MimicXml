@@ -19,10 +19,10 @@ internal class CommandLineSettings
     [Option('v', "verbose", Required = false, Default = true, HelpText = "Verbose output to console (default: true)")]
     public bool Verbose { get; set; } = true;
 
-    [Option('m', "modHist", Required = false, Default = true, HelpText = "Generate a histogram of modification frequencies in the entrapment proteins (default: true)")]
+    [Option('m', "modHist", Required = false, Default = false, HelpText = "Generate a histogram of modification frequencies in the entrapment proteins (default: false)")]
     public bool GenerateModificationHistogram { get; set; } = true;
 
-    [Option('d', "digHist", Required = false, Default = true, HelpText = "Generate a histogram of digestion products in the entrapment proteins (default: true)")]
+    [Option('d', "digHist", Required = false, Default = false, HelpText = "Generate a histogram of digestion products in the entrapment proteins (default: false)")]
     public bool GenerateDigestionProductHistogram { get; set; } = true;
 
     [Option('t', "isTopDown", Required = false, Default = true, HelpText = "Generate entrapment proteins for top-down searches (default: true). If false, generates for bottom-up searches.")]
