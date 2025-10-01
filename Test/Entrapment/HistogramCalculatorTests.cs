@@ -103,7 +103,7 @@ namespace Test.Entrapment
             Assert.That(File.Exists(csvPath), Is.True);
 
             var lines = File.ReadAllLines(csvPath);
-            Assert.That(lines[0], Does.Contain("Peptides,Targets"));
+            Assert.That(lines[0], Does.Contain("Proteoforms,Targets"));
 
             // Check for correct histogram values
             Assert.That(lines.Any(l => l.StartsWith("67,2")), Is.True, "Should have 2 proteins with 67 peptides");
