@@ -25,13 +25,16 @@ jobs:
 
     - name: Build
       run: dotnet build --no-restore --configuration Release
-
+      
+    - name: Add coverlet collector (Test)
+      run: dotnet add Test/Test.csproj package coverlet.collector -v 6.0.2
+      
     - name: Run tests
-      run: dotnet test --no-build --configuration Release --verbosity normal --logger trx
+      run: dotnet test --no-build --configuration Release --verbosity normal --logger trx --collect:"XPlat Code Coverage" /p:CoverletOutputFormat=cobertura ./Test/Test.csproj
 
-    - name: Upload Test Results
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-results
-        path: '**/TestResults/*.trx'
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        verbose: true
+        files: mzLib/Test*/TestResults/*/coverage.cobertura.xml
