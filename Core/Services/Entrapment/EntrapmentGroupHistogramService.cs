@@ -4,6 +4,8 @@ using Core.Services.BioPolymer;
 using Core.Util;
 using Omics;
 using Omics.Digestion;
+using Proteomics.ProteolyticDigestion;
+using Transcriptomics.Digestion;
 
 namespace Core.Services.Entrapment;
 
@@ -156,7 +158,7 @@ public class EntrapmentGroupHistogramService(IModificationHistogramCalculator mo
             allKeys.UnionWith(hist.Keys);
         var outputPath = Path.Combine(outputDirectory, $"{entrapmentDbName}_DigestionHistogram.csv");
         using var writer = new StreamWriter(outputPath);
-        writer.WriteLine("Peptides,Targets," + string.Join(",", foldHists.Keys.Select(f => $"Fold{f}")));
+        writer.WriteLine($"{GetIdentifier(digestionParams)},Targets," + string.Join(",", foldHists.Keys.Select(f => $"Fold{f}")));
         foreach (var key in allKeys)
         {
             writer.Write(key);
@@ -187,5 +189,18 @@ public class EntrapmentGroupHistogramService(IModificationHistogramCalculator mo
 
         if (Verbose)
             Logger.WriteLine($"Wrote digestion histogram to {outputPath}");
+    }
+
+    private string GetIdentifier(IDigestionParams digestionParams)
+    {
+        var agentName = digestionParams.DigestionAgent.Name;
+        return digestionParams switch
+        {
+            DigestionParams when agentName == "top-down" => "Proteoforms",
+            DigestionParams => "Peptides",
+            RnaDigestionParams when agentName == "top-down" => "Transcripts",
+            RnaDigestionParams => "Oligos",
+            _ => string.Empty
+        };
     }
 }

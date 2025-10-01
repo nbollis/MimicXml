@@ -63,12 +63,12 @@ public class Program
             tempMimicOutputPath = Path.Combine(tempPath, $"{fileName}_mimic_output.fasta");
 
             // Convert XML to FASTA
-            Logger.WriteLine("Converting target XML to FASTA...", 2);
+            Logger.WriteLine("Converting target XML to FASTA...", 1);
             var bioPolymers = reader.Load(options.StartingXmlPath, null!).ToList();
             writer.Write(bioPolymers, tempFastaPath);
 
             // Run mimic
-            Logger.WriteLine("Running mimic...", 2);
+            Logger.WriteLine("Running mimic...", 1);
             options.MimicParams.InputFastaPath = tempFastaPath;
             options.MimicParams.OutputFastaPath = tempMimicOutputPath;
             var res = mimic.RunAsync(options.MimicParams).Result;
