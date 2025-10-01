@@ -5,8 +5,6 @@ using Core.Util;
 using Microsoft.Extensions.DependencyInjection;
 using mimicXml;
 using Plotly.NET;
-using Plotly.NET.ImageExport;
-using Readers;
 using Chart = Plotly.NET.CSharp.Chart;
 
 namespace Test.Entrapment

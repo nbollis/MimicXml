@@ -1,7 +1,6 @@
 ﻿using CommandLine;
 using CommandLine.Text;
 using Core.Services.BioPolymer;
-using Core.Services.Entrapment;
 using Core.Services.IO;
 using Core.Util;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,16 +34,10 @@ public class Program
         var services = AppHost.CreateBaseServices("appsettings.json");
         AppHost.Services = services.BuildServiceProvider();
 
-        var reader = AppHost.GetService<IEntrapmentLoadingService>();
-        var writer = AppHost.GetService<IBioPolymerDbWriter>();
-        var hist = AppHost.GetService<IEntrapmentGroupHistogramService>();
         var fileDetection = AppHost.GetService<IFileTypeDetectionService>();
         var digProvider = AppHost.GetService<IDigestionParamsProvider>();
-
-        var generator = new EntrapmentXmlGenerator(reader, writer, hist)
-        {
-            Verbose = options.Verbose
-        };
+        var generator = AppHost.GetService<EntrapmentXmlGenerator>();
+        generator.Verbose = options.Verbose;
 
         var fileType = fileDetection.DetectFileType(options.StartingXmlPath);
         IDigestionParams digParams = digProvider.GetParams(fileType, options.IsTopDown);
