@@ -1,7 +1,7 @@
 ﻿using Core.Services.BioPolymer;
 using Core.Services.Entrapment;
 using Core.Services.IO;
-using Core.Services.SearchParsing;
+using Core.Services.Mimic;
 using Microsoft.Extensions.DependencyInjection;
 using Omics;
 
@@ -44,18 +44,12 @@ public static class AppHost
                 provider.GetRequiredService<IFileTypeDetectionService>()
             ));
 
-        // Register MetaMorpheus parsing services
-        services.AddSingleton<MetaMorpheusBulkResultsService>();
-        services.AddSingleton<MetaMorpheusIndividualFilesService>();
-
         // Register BioPolymer services
         services.AddSingleton<IDigestionParamsProvider, DigestionParamsProvider>();
         services.AddSingleton<IDigestionHistogramCalculator, DigestionHistogramCalculator>();
         services.AddSingleton<IModificationHistogramCalculator, ModificationHistogramCalculator>();
 
         // Register EntrapmentEvaluator services
-        services.AddSingleton<IEntrapmentProcessingService, EntrapmentProcessingService>();
-        services.AddSingleton<IEntrapmentOutputService, EntrapmentOutputService>();
         services.AddSingleton<IEntrapmentLoadingService>(provider =>
             new EntrapmentLoadingService(provider.GetRequiredService<IBioPolymerDbReader<IBioPolymer>>()));
         services.AddSingleton<IEntrapmentGroupHistogramService>(provider =>
