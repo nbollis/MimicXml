@@ -1,6 +1,6 @@
 # MimicXml Command-Line Tool
 
-## Overview
+[![codecov](https://codecov.io/gh/smith-chem-wisc/mzLib/branch/master/graph/badge.svg)](https://app.codecov.io/gh/nbollis/MimicXml)
 
 `MimicXml` is a .NET 8 command-line utility for generating entrapment XML files for proteomics workflows. It can use a user-supplied entrapment FASTA or generate one on-the-fly using a bundled version of the [mimic](https://github.com/percolator/mimic) executable (forked from commit [`504df5b`](https://github.com/percolator/mimic/commit/504df5b), see pull request [#4](https://github.com/percolator/mimic/pull/4)).
 
