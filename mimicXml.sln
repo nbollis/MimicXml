@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36518.9 d17.14
+VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mimicXml", "mimicXml\mimicXml.csproj", "{379569D3-39E0-4EA1-ACBE-B84DF9DB4D1D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{3EE12020-3AA1-494B-923A-CEF5C7BB7C8B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{6E8FC776-A25B-4E34-9267-AD7780EB5795}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{3EE12020-3AA1-494B-923A-CEF5C7BB7C8B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3EE12020-3AA1-494B-923A-CEF5C7BB7C8B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3EE12020-3AA1-494B-923A-CEF5C7BB7C8B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E8FC776-A25B-4E34-9267-AD7780EB5795}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E8FC776-A25B-4E34-9267-AD7780EB5795}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E8FC776-A25B-4E34-9267-AD7780EB5795}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E8FC776-A25B-4E34-9267-AD7780EB5795}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -18,6 +18,10 @@
   </ItemGroup>
 
   <ItemGroup>
+	<InternalsVisibleTo Include="Test" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="Digestion\rnases.tsv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

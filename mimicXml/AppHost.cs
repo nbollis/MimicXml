@@ -62,6 +62,10 @@ public static class AppHost
             new EntrapmentGroupHistogramService(
                 provider.GetRequiredService<IModificationHistogramCalculator>(),
                 provider.GetRequiredService<IDigestionHistogramCalculator>()));
+        services.AddSingleton<EntrapmentXmlGenerator>(provider => new EntrapmentXmlGenerator(
+            provider.GetRequiredService<IEntrapmentLoadingService>(),
+            provider.GetRequiredService<IBioPolymerDbWriter>(),
+            provider.GetRequiredService<IEntrapmentGroupHistogramService>()));
 
         return services;
     }
