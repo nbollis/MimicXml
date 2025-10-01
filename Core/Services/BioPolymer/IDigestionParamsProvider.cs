@@ -32,6 +32,6 @@ public class DigestionParamsProvider : IDigestionParamsProvider
             return new DigestionParams();
         if (isTopDown && isRna)
             return new RnaDigestionParams(maxModificationIsoforms: 4096, maxMods: 3);
-        return new RnaDigestionParams("RNase-T1", 2);
+        return new RnaDigestionParams("RNase T1", 2);
     }
 }

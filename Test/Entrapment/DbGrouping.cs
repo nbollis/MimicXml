@@ -24,6 +24,7 @@ public class DbGrouping
         var loader = AppHost.GetService<IEntrapmentLoadingService>();
         var groups = loader.LoadAndParseProteins(new List<string> { TargetDb, EntrapmentDb });
 
+        Assert.That(groups.K, Is.EqualTo(3));
         Assert.That(groups.Count(), Is.EqualTo(2));
         foreach (var group in groups)
         {
