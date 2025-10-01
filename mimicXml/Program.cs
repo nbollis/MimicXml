@@ -33,7 +33,7 @@ public class Program
     {
         options.ValidateCommandLineSettings();
         Logger.WriteLine("Initializing services...");
-        var services = AppHost.CreateBaseServices("appsettings.json");
+        var services = AppHost.CreateBaseServices();
         AppHost.Services = services.BuildServiceProvider();
 
         // Pull services we need

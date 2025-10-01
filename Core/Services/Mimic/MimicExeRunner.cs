@@ -24,8 +24,7 @@ public class MimicExeRunner : IMimicExeRunner
 
     public async Task<(int OutputCode, string EntrapmentPath)> RunAsync(MimicParams arguments, CancellationToken cancellationToken = default)
     {
-        if (arguments is null)
-            throw new ArgumentNullException(nameof(arguments));
+        ArgumentNullException.ThrowIfNull(arguments, nameof(arguments));
         if (string.IsNullOrWhiteSpace(arguments.InputFastaPath))
             throw new ArgumentException("InputFastaPath is required in MimicParams");
         if (string.IsNullOrWhiteSpace(arguments.OutputFastaPath))

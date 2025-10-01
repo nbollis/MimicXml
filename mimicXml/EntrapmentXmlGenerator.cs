@@ -18,7 +18,7 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
         public Modification Mod { get; set; }
     }
 
-    public string GetOutputPath(string entrapmentFastaPath) 
+    public static string GetOutputPath(string entrapmentFastaPath) 
     {
         var dir = Path.GetDirectoryName(entrapmentFastaPath);
         var filename = Path.GetFileNameWithoutExtension(entrapmentFastaPath);
@@ -36,7 +36,7 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
 
         ValidateInputPaths(startingXmlPath, entrapmentFastaPath);
 
-        var groups = loadingService.LoadAndParseProteins(new List<string> { startingXmlPath, entrapmentFastaPath });
+        var groups = loadingService.LoadAndParseProteins([startingXmlPath, entrapmentFastaPath]);
         foreach (var cluster in groups)
         {
             // Transfer all modifications. 
@@ -230,7 +230,7 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
     {
         if (!entrapment.OneBasedPossibleLocalizedModifications.TryGetValue(position, out var modList))
         {
-            modList = new List<Modification>();
+            modList = [];
             entrapment.OneBasedPossibleLocalizedModifications[position] = modList;
         }
         if (modList.All(m => m.IdWithMotif != mod.IdWithMotif))

@@ -13,7 +13,7 @@ namespace Test.Entrapment
         [OneTimeSetUp]
         public void Setup()
         {
-            var services = AppHost.CreateBaseServices("appsettings.json");
+            var services = AppHost.CreateBaseServices();
             AppHost.Services = services.BuildServiceProvider();
         }
 
@@ -33,7 +33,7 @@ namespace Test.Entrapment
         public void GetOutputPath_ReturnsExpectedXmlName()
         {
             var generator = AppHost.GetService<EntrapmentXmlGenerator>();
-            var path = generator.GetOutputPath(@"foo\bar\3HumanHistones_MimicTopDown.fasta");
+            var path = EntrapmentXmlGenerator.GetOutputPath(@"foo\bar\3HumanHistones_MimicTopDown.fasta");
             Assert.That(path, Is.EqualTo(@"foo\bar\3HumanHistones_MimicTopDown_Entrapment.xml"));
         }
 
@@ -96,7 +96,7 @@ namespace Test.Entrapment
             Assert.That(entrapmentCount, Is.EqualTo(targetCount * DbRatio));
 
             // Ensure writing works right
-            var outputPath = generator.GetOutputPath(XmlPath);
+            var outputPath = EntrapmentXmlGenerator.GetOutputPath(XmlPath);
             if (File.Exists(outputPath))
                 File.Delete(outputPath);
 

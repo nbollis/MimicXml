@@ -14,7 +14,7 @@ public class DbGrouping
     [OneTimeSetUp]
     public void Setup()
     {
-        var services = AppHost.CreateBaseServices("appsettings.json");
+        var services = AppHost.CreateBaseServices();
         AppHost.Services = services.BuildServiceProvider();
     }
 

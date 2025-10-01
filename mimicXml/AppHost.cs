@@ -13,9 +13,8 @@ public static class AppHost
     /// <summary>
     /// Creates the base services for the application.
     /// </summary>
-    /// <param name="jsonPath">JSON containing configuration for the application.</param>
     /// <returns></returns>
-    public static IServiceCollection CreateBaseServices(string jsonPath)
+    public static IServiceCollection CreateBaseServices()
     {
         var services = new ServiceCollection();
 

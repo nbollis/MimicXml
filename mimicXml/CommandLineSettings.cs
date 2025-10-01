@@ -8,7 +8,7 @@ internal class CommandLineSettings
     public MimicParams MimicParams = null!;
 
     [Option('x', "targetXml", Required = true, HelpText = "Starting XML file path (.xml or .xml.gz)")]
-    public string StartingXmlPath { get; set; }
+    public string StartingXmlPath { get; set; } = null!;
 
     [Option('e', "entrapmentFasta", Required = false, Default = null, HelpText = "[Optional] Entrapment FASTA file path (.fasta or .fa, can be .gz compressed). If this is not set, an entrapment fasta will be generated using mimic and the mimic specifc parameters")]
     public string? EntrapmentFastaPath { get; set; } = null;
@@ -37,6 +37,9 @@ internal class CommandLineSettings
 
     public void ValidateCommandLineSettings()
     {
+        if (StartingXmlPath == null)
+            throw new ArgumentNullException(nameof(StartingXmlPath), "Starting XML path is required");
+
         if (!StartingXmlPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) &&
             !StartingXmlPath.EndsWith(".xml.gz", StringComparison.OrdinalIgnoreCase))
             throw new ArgumentException("Starting database must be .xml or .xml.gz");

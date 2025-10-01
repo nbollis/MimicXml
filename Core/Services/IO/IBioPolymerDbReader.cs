@@ -80,10 +80,10 @@ public class FastaProteinDbReader : IBioPolymerDbReader<Protein>
                 addTruncations: options.AddTruncations,
                 decoyIdentifier: options.DecoyIdentifier);
         }
-        catch (MzLibException ex)
+        catch (MzLibException)
         {
             // Do it ourselves. Header lines for mimic will be like: >mimic|Random_P84243_1|shuffle_1
-            proteins = new List<Protein>();
+            proteins = [];
             var lines = System.IO.File.ReadAllLines(filePath);
 
             var sequenceBuilder = new StringBuilder();
@@ -102,7 +102,7 @@ public class FastaProteinDbReader : IBioPolymerDbReader<Protein>
                         sequenceBuilder.Clear();
                     }
 
-                    var header = line.Substring(1).Trim();
+                    var header = line[1..].Trim();
                     var parts = header.Split('|');
                     if (parts.Length < 2)
                         throw new Exception($"Invalid FASTA header format: {line}");

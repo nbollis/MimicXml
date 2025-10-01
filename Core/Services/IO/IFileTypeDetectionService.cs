@@ -17,24 +17,14 @@ public enum BioPolymerDbFileType
     Unknown
 }
 
-public readonly struct SequenceCharCounts
+public readonly struct SequenceCharCounts(int a, int c, int g, int t, int u, int total)
 {
-    public int A { get; }
-    public int C { get; }
-    public int G { get; }
-    public int T { get; }
-    public int U { get; }
-    public int Total { get; }
-
-    public SequenceCharCounts(int a, int c, int g, int t, int u, int total)
-    {
-        A = a;
-        C = c;
-        G = g;
-        T = t;
-        U = u;
-        Total = total;
-    }
+    public int A { get; } = a;
+    public int C { get; } = c;
+    public int G { get; } = g;
+    public int T { get; } = t;
+    public int U { get; } = u;
+    public int Total { get; } = total;
 }
 
 public class FileTypeDetectionService : IFileTypeDetectionService
@@ -68,10 +58,10 @@ public class FileTypeDetectionService : IFileTypeDetectionService
             if (counts.Total == 0)
                 return BioPolymerDbFileType.Unknown;
 
-            int acgtu = counts.A + counts.C + counts.G + counts.T + counts.U;
-            double acgtuRatio = (double)acgtu / counts.Total;
+            int nucleotideCounts = counts.A + counts.C + counts.G + counts.T + counts.U;
+            double nucleotideRatio = (double)nucleotideCounts / counts.Total;
 
-            return acgtuRatio > NucleotideThresholdForRnaDetection
+            return nucleotideRatio > NucleotideThresholdForRnaDetection
                 ? BioPolymerDbFileType.RnaXml
                 : BioPolymerDbFileType.ProteinXml;
         }
@@ -132,7 +122,7 @@ public class FileTypeDetectionService : IFileTypeDetectionService
             string? line;
             while ((line = reader.ReadLine()) != null && linesRead < maxLines)
             {
-                if (line.StartsWith(">"))
+                if (line.StartsWith('>'))
                     continue;
                 sequence.Append(line.Trim().ToUpperInvariant());
                 linesRead++;

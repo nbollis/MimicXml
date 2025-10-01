@@ -16,7 +16,7 @@ public class EntrapmentLoadingService(IBioPolymerDbReader<IBioPolymer> dbReader)
 {
     private readonly IBioPolymerDbReader<IBioPolymer> _dbReader = dbReader;
     public static BioPolymerDbReaderOptions DefaultDbReaderOptions
-        => new BioPolymerDbReaderOptions
+        => new()
         {
             DecoyType = DecoyType.None,
             DecoyIdentifier = "DECOY",
@@ -31,7 +31,7 @@ public class EntrapmentLoadingService(IBioPolymerDbReader<IBioPolymer> dbReader)
             Logger.WriteLine($"Loading {dbPaths.Count} databases...");
 
         // Load all databases 
-        List<IBioPolymer> allBioPolymers = new();
+        List<IBioPolymer> allBioPolymers = [];
         foreach (var dbPath in dbPaths)
         {
             var bioPolymers = _dbReader.Load(dbPath, DefaultDbReaderOptions);
@@ -46,7 +46,7 @@ public class EntrapmentLoadingService(IBioPolymerDbReader<IBioPolymer> dbReader)
         }
 
         // Parse into ProteinRecords
-        List<BioPolymerRecord> allRecords = new();
+        List<BioPolymerRecord> allRecords = [];
         foreach (var bioPolymer in allBioPolymers)
         {
             bool target = !bioPolymer.IsDecoy();
@@ -78,7 +78,7 @@ public class EntrapmentLoadingService(IBioPolymerDbReader<IBioPolymer> dbReader)
         }
 
         // Group into ProteinGroups by target accession
-        List<EntrapmentGroup> proteinGroups = new();
+        List<EntrapmentGroup> proteinGroups = [];
         var grouped = allRecords.GroupBy(r =>
             r.IsEntrapment ? r.BioPolymer.Accession.Split('_')[1] : r.BioPolymer.Accession);
         foreach (var group in grouped.OrderBy(p => p.Key))

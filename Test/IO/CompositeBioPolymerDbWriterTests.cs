@@ -8,11 +8,9 @@ namespace Test.IO;
 [TestFixture]
 public class CompositeBioPolymerDbWriterTests
 {
-    private static Protein CreateProtein(string name = "P1", string seq = "MSEQUENCE") =>
-        new Protein(seq, "ACC1", name: name);
+    private static Protein CreateProtein(string name = "P1", string seq = "MSEQUENCE") => new(seq, "ACC1", name: name);
 
-    private static RNA CreateRna(string accession = "RNA1", string seq = "AUGCUU") =>
-        new RNA(seq, accession);
+    private static RNA CreateRna(string accession = "RNA1", string seq = "AUGCUU") => new(seq, accession);
 
     private static string GetTempFilePath(string extension)
     {

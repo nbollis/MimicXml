@@ -11,7 +11,7 @@ internal class SetUpTests
         // Code that runs once before any tests in the assembly
         Console.WriteLine("Global setup before any tests run.");
 
-        var services = AppHost.CreateBaseServices("appsettings.json");
+        var services = AppHost.CreateBaseServices();
         AppHost.Services = services.BuildServiceProvider();
     }
 

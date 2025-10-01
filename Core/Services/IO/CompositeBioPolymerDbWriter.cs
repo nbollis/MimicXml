@@ -7,23 +7,15 @@ using UsefulProteomicsDatabases;
 
 namespace Core.Services.IO;
 
-public class CompositeBioPolymerDbWriter : BaseService, IBioPolymerDbWriter
+public class CompositeBioPolymerDbWriter(IFileTypeDetectionService fileTypeDetector) : BaseService, IBioPolymerDbWriter
 {
-    private readonly IFileTypeDetectionService _fileTypeDetector;
-
-    public CompositeBioPolymerDbWriter(
-        IFileTypeDetectionService fileTypeDetector)
-    {
-        _fileTypeDetector = fileTypeDetector;
-    }
-
     public void Write(List<IBioPolymer> bioPolymers, string outputPath,
         Dictionary<string, HashSet<Tuple<int, Modification>>>? additionalModsToAdd = null)
     {
-        if (bioPolymers == null || !bioPolymers.Any())
+        if (bioPolymers == null || bioPolymers.Count == 0)
             throw new ArgumentException("No biopolymers provided.");
 
-        var fileType = _fileTypeDetector.DetectFileType(bioPolymers, outputPath);
+        var fileType = fileTypeDetector.DetectFileType(bioPolymers, outputPath);
 
         switch (fileType)
         {
@@ -39,7 +31,7 @@ public class CompositeBioPolymerDbWriter : BaseService, IBioPolymerDbWriter
                 // TODO: You’ll need a RnaDbWriter.WriteFastaDatabase
                 throw new NotImplementedException("RNA Fasta writing not implemented");
                 //RnaDbWriter.WriteFastaDatabase(bioPolymers.Cast<RNA>().ToList(), outputPath);
-                break;
+                //break;
 
             case BioPolymerDbFileType.RnaXml:
                 ProteinDbWriter.WriteXmlDatabase(additionalModsToAdd, bioPolymers.Cast<RNA>().ToList(), outputPath);
