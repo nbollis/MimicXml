@@ -61,6 +61,9 @@ public static class AppHost
             provider.GetRequiredService<IBioPolymerDbWriter>(),
             provider.GetRequiredService<IEntrapmentGroupHistogramService>()));
 
+        // Register MimicExeRunner
+        services.AddSingleton<IMimicExeRunner, MimicExeRunner>();
+
         return services;
     }
 

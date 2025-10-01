@@ -1,10 +1,6 @@
-﻿using Core.Plotting.Entrapment;
-using Core.Services.Entrapment;
-using Core.Util;
+﻿using Core.Services.Entrapment;
 using Microsoft.Extensions.DependencyInjection;
 using mimicXml;
-using Plotly.NET;
-using Chart = Plotly.NET.CSharp.Chart;
 
 namespace Test.Entrapment
 {

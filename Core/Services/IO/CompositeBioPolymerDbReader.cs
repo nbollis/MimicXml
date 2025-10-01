@@ -1,6 +1,7 @@
 ﻿using Omics;
 using Proteomics;
 using Transcriptomics;
+using UsefulProteomicsDatabases;
 
 namespace Core.Services.IO;
 
@@ -26,8 +27,19 @@ public class CompositeBioPolymerDbReader : BaseService, IBioPolymerDbReader<IBio
         _xmlRnaReader = xmlRnaReader;
     }
 
-    public IReadOnlyList<IBioPolymer> Load(string filePath, BioPolymerDbReaderOptions options)
+    public static readonly BioPolymerDbReaderOptions DefaultDbReaderOptions
+        = new BioPolymerDbReaderOptions
+        {
+            DecoyType = DecoyType.None,
+            DecoyIdentifier = "DECOY",
+            AddTruncations = false,
+            MaxHeterozygousVariants = 0,
+            MinAlleleDepth = 0
+        };
+
+    public IReadOnlyList<IBioPolymer> Load(string filePath, BioPolymerDbReaderOptions options = null!)
     {
+        options ??= DefaultDbReaderOptions;
         var fileType = _fileTypeDetector.DetectFileType(filePath);
 
         return fileType switch
