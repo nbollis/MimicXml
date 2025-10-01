@@ -1,6 +1,6 @@
 ﻿using Core.Services.Entrapment;
 using Microsoft.Extensions.DependencyInjection;
-using mimicXml;
+using MimicXml;
 
 namespace Test.Entrapment
 {
@@ -34,7 +34,7 @@ namespace Test.Entrapment
         {
             var generator = AppHost.GetService<EntrapmentXmlGenerator>();
             var path = generator.GetOutputPath(@"foo\bar\3HumanHistones_MimicTopDown.fasta");
-            Assert.That(path, Is.EqualTo(@"foo\bar\3HumanHistones_MimicTopDown.xml"));
+            Assert.That(path, Is.EqualTo(@"foo\bar\3HumanHistones_MimicTopDown_Entrapment.xml"));
         }
 
         [Test]
@@ -96,7 +96,7 @@ namespace Test.Entrapment
             Assert.That(entrapmentCount, Is.EqualTo(targetCount * DbRatio));
 
             // Ensure writing works right
-            var outputPath = generator.GetOutputPath(FastaPath);
+            var outputPath = generator.GetOutputPath(XmlPath);
             if (File.Exists(outputPath))
                 File.Delete(outputPath);
 

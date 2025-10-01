@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36518.9
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mimicXml", "mimicXml\mimicXml.csproj", "{379569D3-39E0-4EA1-ACBE-B84DF9DB4D1D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MimicXml", "MimicXml\MimicXml.csproj", "{379569D3-39E0-4EA1-ACBE-B84DF9DB4D1D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{3EE12020-3AA1-494B-923A-CEF5C7BB7C8B}"
 EndProject

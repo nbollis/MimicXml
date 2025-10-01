@@ -31,38 +31,6 @@ public class DatabaseSet : IEnumerable<EntrapmentGroup>
         }
     }
 
-    public IEnumerable<EntrapmentGroup> GetThoseWithResultBelowCutoff(double cutoff)
-    {
-        return Proteins.Where(g => g.Target.BestScore <= cutoff || g.Entrapments.Any(e => e.BestScore <= cutoff));
-    }
-
-    public EntrapmentGroup? GetGroupForAccession(string accession)
-    {
-        // Try exact, or normalized entrapment
-        if (_lookup.TryGetValue(accession, out var group))
-            return group;
-
-        var norm = NormalizeEntrapmentAccession(accession);
-        return _lookup.GetValueOrDefault(norm);
-    }
-
-    private static string NormalizeEntrapmentAccession(string acc)
-    {
-        // Handles Random_P84243_3 → P84243
-        var parts = acc.Split('_');
-        return parts.Length >= 2 ? parts[1] : acc;
-    }
-
-    public void Reset()
-    {
-        foreach (var group in Proteins)
-        {
-            group.Target.BestScore = double.PositiveInfinity;
-            foreach (var e in group.Entrapments)
-                e.BestScore = double.PositiveInfinity;
-        }
-    }
-
     public IEnumerator<EntrapmentGroup> GetEnumerator() => Proteins.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

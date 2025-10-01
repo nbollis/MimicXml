@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Omics;
 using Omics.Digestion;
 
-namespace mimicXml;
+namespace MimicXml;
 
 public class Program
 {

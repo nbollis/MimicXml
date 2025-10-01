@@ -1,7 +1,7 @@
 ﻿using CommandLine;
 using Core.Services.Mimic;
 
-namespace mimicXml;
+namespace MimicXml;
 
 internal class CommandLineSettings
 {

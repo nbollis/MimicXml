@@ -1,6 +1,6 @@
 ﻿using Core.Services.Entrapment;
 using Microsoft.Extensions.DependencyInjection;
-using mimicXml;
+using MimicXml;
 
 namespace Test.Entrapment;
 

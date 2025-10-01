@@ -5,7 +5,7 @@ using Core.Services.Mimic;
 using Microsoft.Extensions.DependencyInjection;
 using Omics;
 
-namespace mimicXml;
+namespace MimicXml;
 public static class AppHost
 {
     public static IServiceProvider Services { get; set; } = null!;

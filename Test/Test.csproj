@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj" />
-    <ProjectReference Include="..\mimicXml\mimicXml.csproj" />
+    <ProjectReference Include="..\MimicXml\MimicXml.csproj" />
   </ItemGroup>
 
   <ItemGroup>

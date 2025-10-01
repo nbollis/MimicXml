@@ -1,8 +1,8 @@
-# mimicXml Command-Line Tool
+# MimicXml Command-Line Tool
 
 ## Overview
 
-`mimicXml` is a .NET 8 command-line utility for generating entrapment XML files for proteomics workflows. It can use a user-supplied entrapment FASTA or generate one on-the-fly using a bundled version of the [mimic](https://github.com/percolator/mimic) executable (forked from commit [`504df5b`](https://github.com/percolator/mimic/commit/504df5b), see pull request [#4](https://github.com/percolator/mimic/pull/4)).
+`MimicXml` is a .NET 8 command-line utility for generating entrapment XML files for proteomics workflows. It can use a user-supplied entrapment FASTA or generate one on-the-fly using a bundled version of the [mimic](https://github.com/percolator/mimic) executable (forked from commit [`504df5b`](https://github.com/percolator/mimic/commit/504df5b), see pull request [#4](https://github.com/percolator/mimic/pull/4)).
 
 ## Command-Line Options
 
@@ -47,10 +47,10 @@ Other parameters are settable via the command line or hardcoded:
 
 ## Example Usage
 
-`mimicXml.exe -x input.xml --mimicMultFactor 5 --mimicRetainTerm 2`
+`MimicXml.exe -x input.xml --mimicMultFactor 5 --mimicRetainTerm 2`
 This will generate an entrapment FASTA using mimic with a multiplication factor of 5 and retain 2 terminal residues, then produce the output XML.
 
-`mimicXml.exe -x input.xml -e entrapment.fasta -o output.xml`
+`MimicXml.exe -x input.xml -e entrapment.fasta -o output.xml`
 This will use the provided entrapment FASTA and generate the output XML at the specified location.
 
 ## System Requirements

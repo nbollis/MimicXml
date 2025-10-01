@@ -7,7 +7,7 @@ using Omics;
 using Omics.Digestion;
 using Omics.Modifications;
 
-namespace mimicXml;
+namespace MimicXml;
 
 public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IBioPolymerDbWriter writingService, IEntrapmentGroupHistogramService histogramService) : BaseService
 {
