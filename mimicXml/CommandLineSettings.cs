@@ -13,7 +13,7 @@ internal class CommandLineSettings
     [Option('e', "entrapmentFasta", Required = false, Default = null, HelpText = "[Optional] Entrapment FASTA file path (.fasta or .fa, can be .gz compressed). If this is not set, an entrapment fasta will be generated using mimic and the mimic specifc parameters")]
     public string? EntrapmentFastaPath { get; set; } = null;
 
-    [Option('o', "output", Required = false, Default = null, HelpText = "[Optional] Output XML file path (.xml), if not set output will be to the same location as the entrapment fasta path")]
+    [Option('o', "output", Required = false, Default = null, HelpText = "[Optional] Output XML file path (.xml), if not set output will be to the same location as the original xml")]
     public string? OutputXmlPath { get; set; }
 
     [Option('v', "verbose", Required = false, Default = true, HelpText = "Verbose output to console (default: true)")]
@@ -54,6 +54,14 @@ internal class CommandLineSettings
 
         if (IsTopDown && MimicTerminalResiduesToRetain == 0)
             MimicTerminalResiduesToRetain = 4; // Default to 4 if top-down and not set
+
+        if (OutputXmlPath != null && !OutputXmlPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+        {
+            var dir = Path.GetDirectoryName(OutputXmlPath);
+            var file = Path.GetFileNameWithoutExtension(OutputXmlPath);
+            OutputXmlPath = Path.Combine(dir ?? string.Empty, $"{file}.xml");
+        }
+
 
         MimicParams = new() 
         { 
