@@ -59,7 +59,7 @@ public class Program
 
             var fileName = Path.GetFileNameWithoutExtension(options.StartingXmlPath);
             var tempPath = Path.GetTempPath();
-            tempFastaPath = Path.Combine(tempPath, $"{fileName}_entrapment.fasta");
+            tempFastaPath = Path.Combine(tempPath, $"{fileName}_XmlToFasta.fasta");
             tempMimicOutputPath = Path.Combine(tempPath, $"{fileName}_mimic_output.fasta");
 
             // Convert XML to FASTA
