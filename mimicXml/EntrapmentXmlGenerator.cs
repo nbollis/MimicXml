@@ -62,13 +62,20 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
         outPath ??= GetOutputPath(startingXmlPath); 
         writingService.Write(toWrite, outPath);        
 
-        // Print entrapment modification distribution for each entrapment fold
-        if (writeModHist)
-            histogramService.WriteModificationHistogram(groups, Path.GetDirectoryName(outPath) ?? "", Path.GetFileNameWithoutExtension(startingXmlPath));
+        if (writeDigHist || writeModHist)
+        {
+            groups = loadingService.LoadAndParseProteins([startingXmlPath, outPath]);
 
-        // Print Digestion Counts
-        if (writeDigHist && digParams != null)
-            histogramService.WriteDigestionHistogram(groups, Path.GetDirectoryName(outPath) ?? "", digParams, Path.GetFileNameWithoutExtension(startingXmlPath));
+            // Print entrapment modification distribution for each entrapment fold
+            if (writeModHist)
+                histogramService.WriteModificationHistogram(groups, Path.GetDirectoryName(outPath) ?? "",
+                    Path.GetFileNameWithoutExtension(outPath));
+
+            // Print Digestion Counts
+            if (writeDigHist && digParams != null)
+                histogramService.WriteDigestionHistogram(groups, Path.GetDirectoryName(outPath) ?? "", digParams,
+                    Path.GetFileNameWithoutExtension(outPath));
+        }
     }
 
     public static void ValidateInputPaths(string startingXmlPath, string entrapmentFastaPath)
