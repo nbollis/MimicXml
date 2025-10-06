@@ -33,6 +33,12 @@
     <None Update="Entrapment\TestData\3HumanHistones_MimicTopDown.fasta">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Entrapment\TestData\ErrantProts.fasta">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Entrapment\TestData\ErrantProts.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Entrapment\TestData\TwoHumanHistone.fasta">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

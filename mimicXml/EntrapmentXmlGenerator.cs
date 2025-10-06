@@ -1,11 +1,11 @@
-﻿using System.Diagnostics;
-using Core.Services;
+﻿using Core.Services;
 using Core.Services.Entrapment;
 using Core.Services.IO;
 using Easy.Common.Extensions;
 using Omics;
 using Omics.Digestion;
 using Omics.Modifications;
+using System.Diagnostics;
 
 namespace MimicXml;
 
@@ -31,6 +31,7 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
     /// <exception cref="ArgumentException"></exception>
     public void GenerateXml(string startingXmlPath, string entrapmentFastaPath, bool writeModHist, bool writeDigHist, IDigestionParams? digParams = null, string? outPath = null)
     {
+        List<string> errors = new();
         loadingService.Verbose = Verbose;
         writingService.Verbose = Verbose;
 
@@ -46,14 +47,7 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
 
             foreach (var entrapment in cluster.Entrapments.Select(e => e.BioPolymer))
             {
-                foreach (var mod in mods)
-                {
-                    int position = FindBestModPosition(entrapment, cluster.Target.BioPolymer, mod);
-                    if (position > 0)
-                        AddModToEntrapment(entrapment, position, mod.Mod);
-                    else
-                        Debugger.Break(); // No matching residue found
-                }
+                AssignModificationsAllowingDuplicates(entrapment, cluster.Target.BioPolymer, mods, ref errors);
             }
 
             // Transfer truncations. 
@@ -62,9 +56,11 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
                     entrapment.TruncationProducts.AddRange(cluster.Target.BioPolymer.TruncationProducts);
         }
 
-        var toWrite = groups.SelectMany(g => g.Entrapments.Select(e => e.BioPolymer)).ToList();
-        outPath ??= GetOutputPath(startingXmlPath);
-        writingService.Write(toWrite, outPath);
+        var toWrite = groups.SelectMany(g => g.Entrapments.Select(e => e.BioPolymer))
+            .ToList();
+
+        outPath ??= GetOutputPath(startingXmlPath); 
+        writingService.Write(toWrite, outPath);        
 
         // Print entrapment modification distribution for each entrapment fold
         if (writeModHist)
@@ -90,11 +86,22 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
         {
             foreach (var mod in modList.DistinctBy(p => p.IdWithMotif))
             {
+                char residueAtSite = target.BaseSequence[position - 1];
+                char motiff = mod.Target.ToString()[0];
+
+                // Error Checks
+                if (residueAtSite != motiff && motiff != 'X')
+                    Debugger.Break(); // Should not happen
+
+                if (position > target.BaseSequence.Length)
+                    Debugger.Break(); // Should not happen
+
+                // Mod can be on any residue, so use the actual residue at the site. 
+                var res = motiff == 'X' ? residueAtSite : motiff;
+
                 yield return new ModInfo
                 {
-                    Residue = position > 0 && position <= target.BaseSequence.Length
-                        ? target.BaseSequence[position - 1]
-                        : '\0',
+                    Residue = res,
                     Position = position,
                     Mod = mod
                 };
@@ -102,63 +109,112 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
         }
     }
 
-    internal int FindBestModPosition(IBioPolymer entrapment, IBioPolymer target, ModInfo mod)
+    private void AssignModificationsAllowingDuplicates(
+        IBioPolymer entrapment,
+        IBioPolymer target,
+        List<ModInfo> mods,
+        ref List<string> errors)
+    {
+        // Separate terminal and non-terminal mods
+        var nTermMods = mods.Where(m =>
+            m.Mod.LocationRestriction.Contains("N-term", StringComparison.InvariantCultureIgnoreCase) ||
+            m.Mod.LocationRestriction.Contains("5'-", StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+        var cTermMods = mods.Where(m =>
+            m.Mod.LocationRestriction.Contains("C-term", StringComparison.InvariantCultureIgnoreCase) ||
+            m.Mod.LocationRestriction.Contains("3'-", StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+        var nonTermMods = mods.Except(nTermMods).Except(cTermMods).ToList();
+
+        // Handle N-term mods
+        foreach (var mod in nTermMods)
+        {
+            int pos = FindBestModPosition(entrapment, target, mod, ref errors);
+            if (pos > 0)
+                AddModToEntrapment(entrapment, pos, mod.Mod);
+            else
+                Debugger.Break();
+        }
+
+        // Handle C-term mods
+        foreach (var mod in cTermMods)
+        {
+            int pos = FindBestModPosition(entrapment, target, mod, ref errors);
+            if (pos > 0)
+                AddModToEntrapment(entrapment, pos, mod.Mod);
+            else
+                Debugger.Break();
+        }
+
+        // Handle non-terminal mods: allow multiple mods at the same position if IdWithMotif is unique
+        foreach (var mod in nonTermMods)
+        {
+            int bestPos = -1;
+            int bestDist = int.MaxValue;
+            for (int i = 0; i < entrapment.BaseSequence.Length; i++)
+            {
+                if (entrapment.BaseSequence[i] != mod.Residue)
+                    continue;
+
+                // Only skip if this exact mod is already present at this position
+                if (entrapment.OneBasedPossibleLocalizedModifications.TryGetValue(i + 1, out var existingMods) &&
+                    existingMods.Any(m2 => m2.IdWithMotif == mod.Mod.IdWithMotif))
+                    continue;
+
+                int dist = Math.Abs((i + 1) - mod.Position);
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestPos = i + 1;
+                }
+            }
+
+            if (bestPos > 0)
+                AddModToEntrapment(entrapment, bestPos, mod.Mod);
+            else
+            {
+                errors.Add($"Could not assign mod {mod.Mod.IdWithMotif} for entrapment {entrapment.Accession}");
+                Debugger.Break();
+            }
+        }
+    }
+
+    internal int FindBestModPosition(IBioPolymer entrapment, IBioPolymer target, ModInfo mod, ref List<string> errors)
     {
         // Handle N-term
         if (mod.Mod.LocationRestriction.Contains("N-term", StringComparison.InvariantCultureIgnoreCase) ||
                                   mod.Mod.LocationRestriction.Contains("5'-", StringComparison.InvariantCultureIgnoreCase))
         {
-            // Create new base sequence with N-term residue matching target
-            var newBaseSeq = entrapment.BaseSequence.ToArray();
-
-            // TODO: This will not work for RNA due to the M being hard coded. 
-
-            // if target starts with M and entrapment does not, swap first residue with first M in entrapment
-            if (target.BaseSequence.StartsWith('M') && !entrapment.BaseSequence.StartsWith('M'))
-            {
-                char firstResidue = entrapment.BaseSequence[0];
-                int indexOfFistM = entrapment.BaseSequence.IndexOf('M', 1, entrapment.BaseSequence.Length - 2);  // -2 to avoid C-term
-
-                newBaseSeq[indexOfFistM] = firstResidue;
-                newBaseSeq[0] = 'M';
-            }
-
-            // N-term mod on second position due to only occuring after methionine cleavage
-            // If the residue at position 2 does not match the mod residue, swap it 
-            if (mod.Position == 2 && entrapment.BaseSequence[mod.Position - 1] != mod.Residue) // N-term mod that happens after Methionine cleavage. 
-            {
-                char secondResidue = entrapment.BaseSequence[1];
-                int indexOfFirstModResidue = entrapment.BaseSequence.IndexOf(mod.Residue, 2);
-                newBaseSeq[indexOfFirstModResidue] = secondResidue;
-                newBaseSeq[1] = mod.Residue;
-            }
-            else if (mod.Position > 2)
+            // N term mods should be on the first two residues, 1 for n term, second for n term after methionine cleavage
+            if (mod.Position > 2)
                 Debugger.Break(); // Should not happen
 
-            if (newBaseSeq == entrapment.BaseSequence.ToArray())
-                return mod.Position; // No change needed
-
-            // With the following code using reflection to set the read-only property:
-            var baseSequenceProperty = entrapment.GetType().GetProperty("BaseSequence");
-            if (baseSequenceProperty is not null && baseSequenceProperty.CanWrite)
+            if (mod.Residue != entrapment.BaseSequence[mod.Position - 1])
             {
-                baseSequenceProperty.SetValue(entrapment, new string(newBaseSeq));
-            }
-            else
-            {
-                // Use reflection to set the backing field if property is read-only
-                var backingField = entrapment.GetType().GetField("<BaseSequence>k__BackingField", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                if (backingField is not null)
+                Debugger.Break(); // Should not happen
+
+                // If we get here, swap residues with the nearest matching residue
+                var newBaseSeq = entrapment.BaseSequence.ToArray();
+
+                // Find first occurrence of the required residue (excluding N-term)
+                int swapIndex = entrapment.BaseSequence.IndexOf(mod.Residue, 1);
+                if (swapIndex >= 0)
                 {
-                    backingField.SetValue(entrapment, new string(newBaseSeq));
+                    // Swap residues
+                    (newBaseSeq[mod.Position - 1], newBaseSeq[swapIndex]) = (newBaseSeq[swapIndex], newBaseSeq[mod.Position - 1]);
+                    var baseSequenceProperty = entrapment.GetType().GetProperty("BaseSequence");
+                    if (baseSequenceProperty is not null && baseSequenceProperty.CanWrite)
+                    {
+                        baseSequenceProperty.SetValue(entrapment, new string(newBaseSeq));
+                    }
                 }
-                else
-                {
-                    Debugger.Break(); // Could not set BaseSequence
-                }
+                else 
+                    Debugger.Break(); // Should not happen unless mimic mutated away the residue we need
+
+                errors.Add($"Swapped  N-term residues in entrapment {entrapment.Accession} to accommodate modification {mod.Mod.IdWithMotif} at position {mod.Position}");
             }
 
-            return mod.Position;
+            return mod.Position; 
         }
 
         // Handle C-term
@@ -185,23 +241,13 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
                     {
                         baseSequenceProperty.SetValue(entrapment, new string(newBaseSeq));
                     }
-                    else
-                    {
-                        var backingField = entrapment.GetType().GetField("<BaseSequence>k__BackingField", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                        if (backingField is not null)
-                        {
-                            backingField.SetValue(entrapment, new string(newBaseSeq));
-                        }
-                        else
-                        {
-                            Debugger.Break(); // Could not set BaseSequence
-                        }
-                    }
                 }
                 else // no matching residue found, do nothing
-                    Debugger.Break(); // Should not happen
+                    Debugger.Break(); // Should not happen unless mimic mutated away the residue we need
+
+                errors.Add($"Swapped C-term residues in entrapment {entrapment.Accession} to accommodate modification {mod.Mod.IdWithMotif} at position {mod.Position}");
             }
-            return entrapment.BaseSequence.Length + 2;
+            return entrapment.BaseSequence.Length;
         }
 
         // Find closest matching residue
@@ -226,6 +272,9 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
         return closestPosition;
     }
 
+    /// <summary>
+    /// Adds a mod to an entrapment protein at the specified position if it is not already present.
+    /// </summary>
     internal void AddModToEntrapment(IBioPolymer entrapment, int position, Modification mod)
     {
         if (!entrapment.OneBasedPossibleLocalizedModifications.TryGetValue(position, out var modList))

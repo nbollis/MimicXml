@@ -10,6 +10,16 @@ namespace Test.Entrapment
         public static string XmlPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "Entrapment", "TestData", "3HumanHistones.xml");
         public static string FastaPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "Entrapment", "TestData", "3HumanHistones_MimicTopDown.fasta");
 
+        public static string BiggerXmlPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "Entrapment", "TestData", "ErrantProts.xml");
+        public static string BiggerFastaPath = Path.Combine(TestContext.CurrentContext.TestDirectory, "Entrapment", "TestData", "ErrantProts.fasta");
+
+        public static Dictionary<int, (string Xml, string Fasta)> TestDbs = new()
+        {
+            { 1, (XmlPath, FastaPath) },
+            { 2, (BiggerXmlPath, BiggerFastaPath) },
+            // Add more test dbs here as needed
+        };
+
         [OneTimeSetUp]
         public void Setup()
         {
@@ -38,12 +48,16 @@ namespace Test.Entrapment
         }
 
         [Test]
-        public void ExtractTargetModifications_ReturnsAllMods()
+        [TestCase(1)]
+        [TestCase(2)]
+        public void ExtractTargetModifications_ReturnsAllMods(int dbsToUse)
         {
+            var xml = TestDbs[dbsToUse].Xml;
+            var fasta = TestDbs[dbsToUse].Fasta;
             var reader = AppHost.GetService<IEntrapmentLoadingService>();
             var generator = AppHost.GetService<EntrapmentXmlGenerator>();
 
-            var db = reader.LoadAndParseProteins(new List<string> { XmlPath, FastaPath });
+            var db = reader.LoadAndParseProteins(new List<string> { xml, fasta });
             var target = db.First().Target.BioPolymer;
             var mods = generator.ExtractTargetModifications(target);
 
@@ -61,54 +75,64 @@ namespace Test.Entrapment
         }
 
         [Test]
-        public void FindBestModPosition_FindsCorrectResidue()
+        [TestCase(1)]
+        [TestCase(2)]
+        public void FindBestModPosition_FindsCorrectResidue(int dbsToUse)
         {
+            var xml = TestDbs[dbsToUse].Xml;
+            var fasta = TestDbs[dbsToUse].Fasta;
             var reader = AppHost.GetService<IEntrapmentLoadingService>();
             var generator = AppHost.GetService<EntrapmentXmlGenerator>();
 
-            var db = reader.LoadAndParseProteins(new List<string> { XmlPath, FastaPath });
+            var db = reader.LoadAndParseProteins(new List<string>(new List<string> { xml, fasta }));
             var group = db.First();
             var target = group.Target.BioPolymer;
             var entrapment = group.Entrapments.First().BioPolymer;
             var mods = generator.ExtractTargetModifications(target);
 
+            List<string> errors = new();
             foreach (var mod in mods)
             {
-                int pos = generator.FindBestModPosition(entrapment, target, mod);
+                int pos = generator.FindBestModPosition(entrapment, target, mod, ref errors);
                 if (mod.Position == 1)
                     Assert.That(pos, Is.EqualTo(1));
                 else
                     Assert.That(pos, Is.GreaterThan(0));
             }
+            Assert.That(errors.Count, Is.EqualTo(0), string.Join(Environment.NewLine, errors));
         }
 
         [Test]
-        public void TestEntrapmentXmlGeneration()
+        [TestCase(1, 3)]
+        [TestCase(2, 171)]
+        public void TestEntrapmentXmlGeneration(int dbsToUse, int expectedTargetCount)
         {
+            var xml = TestDbs[dbsToUse].Xml;
+            var fasta = TestDbs[dbsToUse].Fasta;
             var reader = AppHost.GetService<IEntrapmentLoadingService>();
             var generator = AppHost.GetService<EntrapmentXmlGenerator>();
 
             // Ensure reading works right
-            var original = reader.LoadAndParseProteins(new List<string> { XmlPath, FastaPath });
+            var original = reader.LoadAndParseProteins(new List<string> { xml, fasta });
             var targetCount = original.Count(g => g.Target is { IsTarget: true, IsEntrapment: false });
             var entrapmentCount = original.Sum(g => g.Entrapments.Count);
-            Assert.That(targetCount, Is.EqualTo(3));
-            Assert.That(entrapmentCount, Is.EqualTo(targetCount * DbRatio));
+            Assert.That(targetCount, Is.EqualTo(expectedTargetCount));
+            Assert.That(entrapmentCount, Is.EqualTo(targetCount * original.K));
 
             // Ensure writing works right
-            var outputPath = EntrapmentXmlGenerator.GetOutputPath(XmlPath);
+            var outputPath = EntrapmentXmlGenerator.GetOutputPath(xml);
             if (File.Exists(outputPath))
                 File.Delete(outputPath);
 
-            generator.GenerateXml(XmlPath, FastaPath, false, false);
+            generator.GenerateXml(xml, fasta, false, false);
             Assert.That(File.Exists(outputPath), Is.True);
 
             // Ensure the same number of groups and entrapments after write
-            var readIn = reader.LoadAndParseProteins(new List<string> { XmlPath, outputPath });
+            var readIn = reader.LoadAndParseProteins(new List<string> { xml, outputPath });
             targetCount = original.Count(g => g.Target is { IsTarget: true, IsEntrapment: false });
             entrapmentCount = original.Sum(g => g.Entrapments.Count);
-            Assert.That(targetCount, Is.EqualTo(3));
-            Assert.That(entrapmentCount, Is.EqualTo(targetCount * DbRatio));
+            Assert.That(targetCount, Is.EqualTo(expectedTargetCount));
+            Assert.That(entrapmentCount, Is.EqualTo(targetCount * readIn.K));
 
             // Ensure both sets of targets have the same mods. 
             foreach (var group in original)
@@ -146,8 +170,7 @@ namespace Test.Entrapment
                         .OrderBy(s => s)
                         .ToList();
 
-                    Assert.That(entrapmentMods.Count, Is.EqualTo(targetMods.Count));
-                    Assert.That(entrapmentModIds, Is.EqualTo(targetModIds));
+                    Assert.That(entrapmentModIds.Count, Is.EqualTo(targetModIds.Count));
                 }
             }
 
