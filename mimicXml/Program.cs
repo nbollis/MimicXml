@@ -1,6 +1,7 @@
 ﻿using CommandLine;
 using CommandLine.Text;
 using Core.Services.BioPolymer;
+using Core.Services.Entrapment;
 using Core.Services.IO;
 using Core.Services.Mimic;
 using Core.Util;
@@ -39,8 +40,15 @@ public class Program
         // Pull services we need
         var fileDetection = AppHost.GetService<IFileTypeDetectionService>();
         var digProvider = AppHost.GetService<IDigestionParamsProvider>();
-        var generator = AppHost.GetService<EntrapmentXmlGenerator>();
-        var cleanup = AppHost.GetService<ITempFileCleanupService>();
+        var cleanup = AppHost.GetService<ITempFileCleanupService>(); 
+        var modAssignmentServiceFactory = AppHost.GetService<Func<ModificationAssignmentStrategy, IModificationAssignmentService>>();
+        var modAssignmentService = modAssignmentServiceFactory(options.ModAssignmentStrategy);
+
+
+        var generator = new EntrapmentXmlGenerator(AppHost.GetService<IEntrapmentLoadingService>(),
+            AppHost.GetService<IBioPolymerDbWriter>(),
+            AppHost.GetService<IEntrapmentGroupHistogramService>(),
+            modAssignmentService);
         generator.Verbose = options.Verbose;
 
         // Determine file type and get digestion params
@@ -74,6 +82,8 @@ public class Program
             var res = mimic.RunAsync(options.MimicParams).Result;
             options.EntrapmentFastaPath = res.EntrapmentPath;
         }
+
+        
 
         Logger.WriteLine("Generating mimic xml...");
         generator.GenerateXml(options.StartingXmlPath, options.EntrapmentFastaPath, options.GenerateModificationHistogram, options.GenerateDigestionProductHistogram, digParams, options.OutputXmlPath);

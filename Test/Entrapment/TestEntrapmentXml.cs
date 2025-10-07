@@ -59,7 +59,7 @@ namespace Test.Entrapment
 
             var db = reader.LoadAndParseProteins(new List<string> { xml, fasta });
             var target = db.First().Target.BioPolymer;
-            var mods = generator.ExtractTargetModifications(target);
+            var mods = IModificationAssignmentService.ExtractTargetModifications(target);
 
             // Should match the number of modifications in the target
             var expectedCount = target.OneBasedPossibleLocalizedModifications.Sum(kvp => kvp.Value.Count);
@@ -82,18 +82,18 @@ namespace Test.Entrapment
             var xml = TestDbs[dbsToUse].Xml;
             var fasta = TestDbs[dbsToUse].Fasta;
             var reader = AppHost.GetService<IEntrapmentLoadingService>();
-            var generator = AppHost.GetService<EntrapmentXmlGenerator>();
+            var modAssigner = new ByResidueModificationAssignmentService();
 
             var db = reader.LoadAndParseProteins(new List<string>(new List<string> { xml, fasta }));
             var group = db.First();
             var target = group.Target.BioPolymer;
             var entrapment = group.Entrapments.First().BioPolymer;
-            var mods = generator.ExtractTargetModifications(target);
+            var mods = IModificationAssignmentService.ExtractTargetModifications(target);
 
             List<string> errors = new();
             foreach (var mod in mods)
             {
-                int pos = generator.FindBestModPosition(entrapment, target, mod, ref errors);
+                int pos = modAssigner.FindBestModPosition(entrapment, target, mod, ref errors);
                 if (mod.Position == 1)
                     Assert.That(pos, Is.EqualTo(1));
                 else

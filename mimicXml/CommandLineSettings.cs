@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using Core.Services.Entrapment;
 using Core.Services.Mimic;
 
 namespace MimicXml;
@@ -33,6 +34,9 @@ internal class CommandLineSettings
 
     [Option("mimicRetainTerm", Required = false, Default = 0, HelpText = "The number of terminal residues that will be retained if running in top-down mode (Default: 0 for Bottom-Up, 4 for Top-Down). If no entrapment database is provided, mimic will run using this parameter.")]
     public int MimicTerminalResiduesToRetain { get; set; } = 0;
+
+    [Option("modAssignment", Required = false, Default = ModificationAssignmentStrategy.ByResidue, HelpText = "Modification assignment strategy: ByPosition or ByResidue")]
+    public ModificationAssignmentStrategy ModAssignmentStrategy { get; set; }
 
     public void ValidateCommandLineSettings()
     {

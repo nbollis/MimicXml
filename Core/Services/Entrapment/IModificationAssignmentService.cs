@@ -1,0 +1,231 @@
+﻿using Core.Models;
+using Omics;
+using Omics.Modifications;
+using System.Diagnostics;
+namespace Core.Services.Entrapment;
+
+public enum ModificationAssignmentStrategy
+{
+    ByPosition,
+    ByResidue
+}
+
+public interface IModificationAssignmentService
+{
+    void AssignModifications(IBioPolymer entrapment, IBioPolymer target, List<ModInfo> mods, ref List<string> errors);
+
+    /// <summary>
+    /// Adds a mod to an entrapment protein at the specified position if it is not already present.
+    /// </summary>
+    internal static void AddModToEntrapment(IBioPolymer entrapment, int position, Modification mod)
+    {
+        if (!entrapment.OneBasedPossibleLocalizedModifications.TryGetValue(position, out var modList))
+        {
+            modList = [];
+            entrapment.OneBasedPossibleLocalizedModifications[position] = modList;
+        }
+        if (modList.All(m => m.IdWithMotif != mod.IdWithMotif))
+            modList.Add(mod);
+        else
+            Debugger.Break(); // Should not happen if FindBestModPosition is correct
+    }
+
+    public static IEnumerable<ModInfo> ExtractTargetModifications(IBioPolymer target)
+    {
+        foreach (var (position, modList) in target.OneBasedPossibleLocalizedModifications.OrderBy(p => p.Key))
+        {
+            foreach (var mod in modList.DistinctBy(p => p.IdWithMotif))
+            {
+                char residueAtSite = target.BaseSequence[position - 1];
+                char motiff = mod.Target.ToString()[0];
+
+                // Error Checks
+                if (residueAtSite != motiff && motiff != 'X')
+                    Debugger.Break(); // Should not happen
+
+                if (position > target.BaseSequence.Length)
+                    Debugger.Break(); // Should not happen
+
+                // Mod can be on any residue, so use the actual residue at the site. 
+                var res = motiff == 'X' ? residueAtSite : motiff;
+
+                yield return new ModInfo
+                {
+                    Residue = res,
+                    Position = position,
+                    Mod = mod
+                };
+            }
+        }
+    }
+}
+
+public class ByResidueModificationAssignmentService : IModificationAssignmentService
+{
+    public void AssignModifications(IBioPolymer entrapment, IBioPolymer target, List<ModInfo> mods, ref List<string> errors)
+    {
+        // Separate terminal and non-terminal mods
+        var nTermMods = mods.Where(m =>
+            m.Mod.LocationRestriction.Contains("N-term", StringComparison.InvariantCultureIgnoreCase) ||
+            m.Mod.LocationRestriction.Contains("5'-", StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+        var cTermMods = mods.Where(m =>
+            m.Mod.LocationRestriction.Contains("C-term", StringComparison.InvariantCultureIgnoreCase) ||
+            m.Mod.LocationRestriction.Contains("3'-", StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+        var nonTermMods = mods.Except(nTermMods).Except(cTermMods).ToList();
+
+        // Handle N-term mods
+        foreach (var mod in nTermMods)
+        {
+            int pos = FindBestModPosition(entrapment, target, mod, ref errors);
+            if (pos > 0)
+                IModificationAssignmentService.AddModToEntrapment(entrapment, pos, mod.Mod);
+            else
+                Debugger.Break();
+        }
+
+        // Handle C-term mods
+        foreach (var mod in cTermMods)
+        {
+            int pos = FindBestModPosition(entrapment, target, mod, ref errors);
+            if (pos > 0)
+                IModificationAssignmentService.AddModToEntrapment(entrapment, pos, mod.Mod);
+            else
+                Debugger.Break();
+        }
+
+        // Handle non-terminal mods: allow multiple mods at the same position if IdWithMotif is unique
+        foreach (var mod in nonTermMods)
+        {
+            int bestPos = -1;
+            int bestDist = int.MaxValue;
+            for (int i = 0; i < entrapment.BaseSequence.Length; i++)
+            {
+                if (entrapment.BaseSequence[i] != mod.Residue)
+                    continue;
+
+                // Only skip if this exact mod is already present at this position
+                if (entrapment.OneBasedPossibleLocalizedModifications.TryGetValue(i + 1, out var existingMods) &&
+                    existingMods.Any(m2 => m2.IdWithMotif == mod.Mod.IdWithMotif))
+                    continue;
+
+                int dist = Math.Abs((i + 1) - mod.Position);
+                if (dist < bestDist)
+                {
+                    bestDist = dist;
+                    bestPos = i + 1;
+                }
+            }
+
+            if (bestPos > 0)
+                IModificationAssignmentService.AddModToEntrapment(entrapment, bestPos, mod.Mod);
+            else
+            {
+                errors.Add($"Could not assign mod {mod.Mod.IdWithMotif} for entrapment {entrapment.Accession}");
+                Debugger.Break();
+            }
+        }
+    }
+
+    public int FindBestModPosition(IBioPolymer entrapment, IBioPolymer target, ModInfo mod, ref List<string> errors)
+    {
+        // Handle N-term
+        if (mod.Mod.LocationRestriction.Contains("N-term", StringComparison.InvariantCultureIgnoreCase) ||
+                                  mod.Mod.LocationRestriction.Contains("5'-", StringComparison.InvariantCultureIgnoreCase))
+        {
+            // N term mods should be on the first two residues, 1 for n term, second for n term after methionine cleavage
+            if (mod.Position > 2)
+                Debugger.Break(); // Should not happen
+
+            if (mod.Residue != entrapment.BaseSequence[mod.Position - 1])
+            {
+                Debugger.Break(); // Should not happen
+
+                // If we get here, swap residues with the nearest matching residue
+                var newBaseSeq = entrapment.BaseSequence.ToArray();
+
+                // Find first occurrence of the required residue (excluding N-term)
+                int swapIndex = entrapment.BaseSequence.IndexOf(mod.Residue, 1);
+                if (swapIndex >= 0)
+                {
+                    // Swap residues
+                    (newBaseSeq[mod.Position - 1], newBaseSeq[swapIndex]) = (newBaseSeq[swapIndex], newBaseSeq[mod.Position - 1]);
+                    var baseSequenceProperty = entrapment.GetType().GetProperty("BaseSequence");
+                    if (baseSequenceProperty is not null && baseSequenceProperty.CanWrite)
+                    {
+                        baseSequenceProperty.SetValue(entrapment, new string(newBaseSeq));
+                    }
+                }
+                else
+                    Debugger.Break(); // Should not happen unless mimic mutated away the residue we need
+
+                errors.Add($"Swapped  N-term residues in entrapment {entrapment.Accession} to accommodate modification {mod.Mod.IdWithMotif} at position {mod.Position}");
+            }
+
+            return mod.Position;
+        }
+
+        // Handle C-term
+        if (mod.Mod.LocationRestriction.Contains("C-term", StringComparison.InvariantCultureIgnoreCase) ||
+             mod.Mod.LocationRestriction.Contains("3'-", StringComparison.InvariantCultureIgnoreCase))
+        {
+            if (mod.Position != entrapment.BaseSequence.Length)
+                Debugger.Break(); // Should not happen
+
+            int cTermIndex = entrapment.BaseSequence.Length - 1;
+            if (entrapment.BaseSequence[cTermIndex] != mod.Residue)
+            {
+                // Find first occurrence of the required residue (excluding C-term)
+                int swapIndex = entrapment.BaseSequence.LastIndexOf(mod.Residue, cTermIndex, cTermIndex - 2);
+                if (swapIndex >= 0)
+                {
+                    var newBaseSeq = entrapment.BaseSequence.ToArray();
+                    // Swap residues
+                    (newBaseSeq[cTermIndex], newBaseSeq[swapIndex]) = (newBaseSeq[swapIndex], newBaseSeq[cTermIndex]);
+
+                    // Set the new sequence using reflection as before
+                    var baseSequenceProperty = entrapment.GetType().GetProperty("BaseSequence");
+                    if (baseSequenceProperty is not null && baseSequenceProperty.CanWrite)
+                    {
+                        baseSequenceProperty.SetValue(entrapment, new string(newBaseSeq));
+                    }
+                }
+                else // no matching residue found, do nothing
+                    Debugger.Break(); // Should not happen unless mimic mutated away the residue we need
+
+                errors.Add($"Swapped C-term residues in entrapment {entrapment.Accession} to accommodate modification {mod.Mod.IdWithMotif} at position {mod.Position}");
+            }
+            return entrapment.BaseSequence.Length;
+        }
+
+        // Find closest matching residue
+        int closestPosition = -1;
+        int closestDistance = int.MaxValue;
+        for (int i = 0; i < entrapment.BaseSequence.Length; i++)
+        {
+            if (entrapment.BaseSequence[i] != mod.Residue)
+                continue;
+
+            if (entrapment.OneBasedPossibleLocalizedModifications.TryGetValue(i + 1, out var existingMods) &&
+                existingMods.Any(m => m.IdWithMotif == mod.Mod.IdWithMotif))
+                continue;
+
+            int distance = Math.Abs((i + 1) - mod.Position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestPosition = i + 1;
+            }
+        }
+        return closestPosition;
+    }
+}
+
+public class ByPositionModificationAssignmentService : IModificationAssignmentService
+{
+    public void AssignModifications(IBioPolymer entrapment, IBioPolymer target, List<ModInfo> mods, ref List<string> errors)
+    {
+        // Implementation for assigning modifications by position
+    }
+}

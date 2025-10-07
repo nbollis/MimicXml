@@ -48,6 +48,19 @@ public static class AppHost
         services.AddSingleton<IDigestionHistogramCalculator, DigestionHistogramCalculator>();
         services.AddSingleton<IModificationHistogramCalculator, ModificationHistogramCalculator>();
 
+        // Register ModificationAssignment services
+        services.AddSingleton<ByPositionModificationAssignmentService>();
+        services.AddSingleton<ByResidueModificationAssignmentService>();
+        services.AddSingleton<Func<ModificationAssignmentStrategy, IModificationAssignmentService>>(provider => strategy =>
+        {
+            return strategy switch
+            {
+                ModificationAssignmentStrategy.ByPosition => provider.GetRequiredService<ByPositionModificationAssignmentService>(),
+                ModificationAssignmentStrategy.ByResidue => provider.GetRequiredService<ByResidueModificationAssignmentService>(),
+                _ => throw new ArgumentException("Unknown strategy")
+            };
+        });
+
         // Register EntrapmentEvaluator services
         services.AddSingleton<IEntrapmentLoadingService>(provider =>
             new EntrapmentLoadingService(provider.GetRequiredService<IBioPolymerDbReader<IBioPolymer>>()));
@@ -55,10 +68,14 @@ public static class AppHost
             new EntrapmentGroupHistogramService(
                 provider.GetRequiredService<IModificationHistogramCalculator>(),
                 provider.GetRequiredService<IDigestionHistogramCalculator>()));
+        // Default for testing purposes only; actual strategy is set in Program.cs
         services.AddSingleton<EntrapmentXmlGenerator>(provider => new EntrapmentXmlGenerator(
             provider.GetRequiredService<IEntrapmentLoadingService>(),
             provider.GetRequiredService<IBioPolymerDbWriter>(),
-            provider.GetRequiredService<IEntrapmentGroupHistogramService>()));
+            provider.GetRequiredService<IEntrapmentGroupHistogramService>(),
+            provider.GetRequiredService<Func<ModificationAssignmentStrategy, IModificationAssignmentService>>()(ModificationAssignmentStrategy.ByResidue)));
+
+
 
         // Register MimicExeRunner
         services.AddSingleton<IMimicExeRunner, MimicExeRunner>();
