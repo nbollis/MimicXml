@@ -224,8 +224,46 @@ public class ByResidueModificationAssignmentService : IModificationAssignmentSer
 
 public class ByPositionModificationAssignmentService : IModificationAssignmentService
 {
+    static ByPositionModificationAssignmentService()
+    {
+        ModificationMotif.TryGetMotif("X", out GenericMotif);
+        GenericMotifString = GenericMotif.ToString();
+    }
+
+    private static readonly ModificationMotif GenericMotif;
+    private static readonly string GenericMotifString;
+
     public void AssignModifications(IBioPolymer entrapment, IBioPolymer target, List<ModInfo> mods, ref List<string> errors)
     {
-        // Implementation for assigning modifications by position
+        // Ensure mods can go on any residue by setting their target to 'X'
+        foreach (var mod in mods)
+        {
+            if (mod.Mod.Target.ToString() == GenericMotifString)
+                continue;
+
+            // Use reflection to set the protected property 'Target'
+            var targetProperty = mod.Mod.GetType().GetProperty("Target", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            if (targetProperty is not null && targetProperty.CanWrite)
+            {
+                targetProperty.SetValue(mod.Mod, GenericMotif);
+            }
+            else
+            {
+                // Optionally handle the error or log it
+                errors.Add($"Could not set Target property for mod {mod.Mod.IdWithMotif} via reflection.");
+            }
+        }
+
+        // Assign mods by position directly
+        foreach (var mod in mods)
+        {
+            if (mod.Position < 1 || mod.Position > entrapment.BaseSequence.Length)
+            {
+                errors.Add($"Modification position {mod.Position} is out of bounds for entrapment {entrapment.Accession} with length {entrapment.BaseSequence.Length}.");
+                Debugger.Break(); // Should not happen
+                continue;
+            }
+            IModificationAssignmentService.AddModToEntrapment(entrapment, mod.Position, mod.Mod);
+        }
     }
 }

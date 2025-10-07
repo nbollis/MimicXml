@@ -29,14 +29,14 @@ internal class CommandLineSettings
     [Option('t', "isTopDown", Required = false, Default = true, HelpText = "Generate entrapment proteins for top-down searches (default: true). If false, generates for bottom-up searches.")]
     public bool IsTopDown { get; set; } = true;
 
+    [Option('a', "modAssignment", Required = false, Default = ModificationAssignmentStrategy.ByResidue, HelpText = "Modification assignment strategy: ByPosition or ByResidue")]
+    public ModificationAssignmentStrategy ModAssignmentStrategy { get; set; }
+
     [Option("mimicMultFactor", Required = false, Default = 9, HelpText = "Determines the number of times the database should be multiplied (Default: 9). Higher values create more entrapment sequences, but take longer to run. If no entrapment database is provided, mimic will run using this parameter.")]
     public int MimicMultFactor { get; set; } = 9;
 
     [Option("mimicRetainTerm", Required = false, Default = 0, HelpText = "The number of terminal residues that will be retained if running in top-down mode (Default: 0 for Bottom-Up, 4 for Top-Down). If no entrapment database is provided, mimic will run using this parameter.")]
     public int MimicTerminalResiduesToRetain { get; set; } = 0;
-
-    [Option("modAssignment", Required = false, Default = ModificationAssignmentStrategy.ByResidue, HelpText = "Modification assignment strategy: ByPosition or ByResidue")]
-    public ModificationAssignmentStrategy ModAssignmentStrategy { get; set; }
 
     public void ValidateCommandLineSettings()
     {

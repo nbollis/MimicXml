@@ -1,4 +1,5 @@
 ﻿using Core.Services.Entrapment;
+using Core.Services.IO;
 using Microsoft.Extensions.DependencyInjection;
 using MimicXml;
 
@@ -103,14 +104,22 @@ namespace Test.Entrapment
         }
 
         [Test]
-        [TestCase(1, 3)]
-        [TestCase(2, 171)]
-        public void TestEntrapmentXmlGeneration(int dbsToUse, int expectedTargetCount)
+        [TestCase(1, 3, ModificationAssignmentStrategy.ByPosition)]
+        [TestCase(1, 3, ModificationAssignmentStrategy.ByResidue)]
+        [TestCase(2, 171, ModificationAssignmentStrategy.ByPosition)]
+        [TestCase(2, 171, ModificationAssignmentStrategy.ByResidue)]
+        public void TestEntrapmentXmlGeneration(int dbsToUse, int expectedTargetCount, ModificationAssignmentStrategy assignmentStrategy)
         {
             var xml = TestDbs[dbsToUse].Xml;
             var fasta = TestDbs[dbsToUse].Fasta;
             var reader = AppHost.GetService<IEntrapmentLoadingService>();
-            var generator = AppHost.GetService<EntrapmentXmlGenerator>();
+            var modAssignmentServiceFactory = AppHost.GetService<Func<ModificationAssignmentStrategy, IModificationAssignmentService>>();
+            var modAssignmentService = modAssignmentServiceFactory(assignmentStrategy);
+
+            var generator = new EntrapmentXmlGenerator(reader,
+                AppHost.GetService<IBioPolymerDbWriter>(),
+                AppHost.GetService<IEntrapmentGroupHistogramService>(),
+                modAssignmentService);
 
             // Ensure reading works right
             var original = reader.LoadAndParseProteins(new List<string> { xml, fasta });
