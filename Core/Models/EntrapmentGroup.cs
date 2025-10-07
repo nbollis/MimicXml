@@ -1,6 +1,6 @@
 ﻿using Omics;
 
-namespace Core.Models.Entrapment;
+namespace Core.Models;
 
 /// <summary>
 /// A single protein record, either target or entrapment.

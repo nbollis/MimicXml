@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace Core.Models.Entrapment;
+namespace Core.Models;
 
 /// <summary>
 /// Represents all proteins in a database, grouped by target and associated entrapments.

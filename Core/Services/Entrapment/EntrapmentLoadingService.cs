@@ -1,4 +1,4 @@
-﻿using Core.Models.Entrapment;
+﻿using Core.Models;
 using Core.Services.IO;
 using Core.Util;
 using Omics;

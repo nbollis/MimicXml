@@ -6,18 +6,12 @@ using Omics;
 using Omics.Digestion;
 using Omics.Modifications;
 using System.Diagnostics;
+using Core.Models;
 
 namespace MimicXml;
 
 public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IBioPolymerDbWriter writingService, IEntrapmentGroupHistogramService histogramService) : BaseService
 {
-    internal struct ModInfo
-    {
-        public char Residue { get; set; }
-        public int Position { get; set; }
-        public Modification Mod { get; set; }
-    }
-
     public static string GetOutputPath(string entrapmentFastaPath) 
     {
         var dir = Path.GetDirectoryName(entrapmentFastaPath);
@@ -47,7 +41,7 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
 
             foreach (var entrapment in cluster.Entrapments.Select(e => e.BioPolymer))
             {
-                AssignModificationsAllowingDuplicates(entrapment, cluster.Target.BioPolymer, mods, ref errors);
+                AssignModificationsByResidue(entrapment, cluster.Target.BioPolymer, mods, ref errors);
             }
 
             // Transfer truncations. 
@@ -116,7 +110,7 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
         }
     }
 
-    private void AssignModificationsAllowingDuplicates(
+    private void AssignModificationsByResidue(
         IBioPolymer entrapment,
         IBioPolymer target,
         List<ModInfo> mods,

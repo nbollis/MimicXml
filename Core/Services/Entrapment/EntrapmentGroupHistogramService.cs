@@ -1,5 +1,5 @@
 ﻿using System.Collections;
-using Core.Models.Entrapment;
+using Core.Models;
 using Core.Services.BioPolymer;
 using Core.Util;
 using Omics;
