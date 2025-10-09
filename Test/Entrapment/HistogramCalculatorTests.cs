@@ -51,7 +51,7 @@ namespace Test.Entrapment
             var digestionParams = AppHost.GetService<IDigestionParamsProvider>()
                 .GetParams(true, false);
 
-            var histogram = calculator.GetDigestionHistogram(_proteins, digestionParams);
+            var histogram = calculator.GetDigestionHistogram(_proteins, digestionParams, out var masHist);
 
             Assert.That(histogram, Is.Not.Null);
             Assert.That(histogram.Count, Is.EqualTo(2));

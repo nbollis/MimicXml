@@ -32,6 +32,7 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
         ValidateInputPaths(startingXmlPath, entrapmentFastaPath);
 
         var groups = loadingService.LoadAndParseProteins([startingXmlPath, entrapmentFastaPath]);
+        groups.EnsureUniqueAccessions();
         foreach (var cluster in groups)
         {
             // Transfer all modifications. 

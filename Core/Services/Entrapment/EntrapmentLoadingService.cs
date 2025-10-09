@@ -55,20 +55,7 @@ public class EntrapmentLoadingService(IBioPolymerDbReader<IBioPolymer> dbReader)
 
             bool entrapment = bioPolymer.IsEntrapment();
 
-            // Need to add _X to the accession as this is what MM does internally. 
-            string accession = bioPolymer.Accession;
-            if (entrapment && bioPolymer.Name.Contains("shuffle_", StringComparison.InvariantCultureIgnoreCase))
-            {
-                var underscoreIdx = bioPolymer.Name.LastIndexOf('_');
-                if (underscoreIdx >= 0)
-                {
-                    var numberPart = bioPolymer.Name.AsSpan(underscoreIdx + 1).Trim();
-                    if (numberPart is not "1")
-                        accession = $"{accession}_{numberPart.ToString()}";
-                }
-            }
-
-            var record = new BioPolymerRecord(accession)
+            var record = new BioPolymerRecord()
             {
                 BioPolymer = bioPolymer,
                 IsTarget = target,

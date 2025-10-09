@@ -140,8 +140,6 @@ public class ByResidueModificationAssignmentService : IModificationAssignmentSer
 
             if (mod.Residue != entrapment.BaseSequence[mod.Position - 1])
             {
-                Debugger.Break(); // Should not happen
-
                 // If we get here, swap residues with the nearest matching residue
                 var newBaseSeq = entrapment.BaseSequence.ToArray();
 

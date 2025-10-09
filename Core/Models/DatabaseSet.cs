@@ -31,6 +31,18 @@ public class DatabaseSet : IEnumerable<EntrapmentGroup>
         }
     }
 
+    /// <summary>
+    /// Entrapment accessions should be unique within a given entrapment database.
+    /// This method will rename any duplicates it finds by appending _X to the end of the accession, within entrapment folds. 
+    /// </summary>
+    public void EnsureUniqueAccessions()
+    {
+        foreach (var entrapmentGroup in Proteins)
+        {
+            entrapmentGroup.AddShuffleNumberToAccession();
+        }
+    }
+
     public IEnumerator<EntrapmentGroup> GetEnumerator() => Proteins.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
