@@ -67,8 +67,10 @@ public class EntrapmentXmlGenerator(IEntrapmentLoadingService loadingService, IB
 
             // Print Digestion Counts
             if (writeDigHist && digParams != null)
+            {
                 histogramService.WriteDigestionHistogram(groups, Path.GetDirectoryName(outPath) ?? "", digParams,
                     Path.GetFileNameWithoutExtension(outPath));
+            }
         }
     }
 

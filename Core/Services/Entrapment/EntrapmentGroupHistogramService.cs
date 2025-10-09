@@ -141,16 +141,21 @@ public class EntrapmentGroupHistogramService(IModificationHistogramCalculator mo
         }
 
         // Use _digCalc.GetDigestionHistogram for targets and for each fold of entrapments
-        var targetHist = digCalc.GetDigestionHistogram(targets, digestionParams);
+        var targetHist = digCalc.GetDigestionHistogram(targets, digestionParams, out var targetMassHist);
         var foldHists = new Dictionary<int, Dictionary<int, int>>();
+        var foldMassHists = new Dictionary<int, Dictionary<int, int>>();
         Parallel.ForEach(folds, kvp =>
         {
-            var hist = digCalc.GetDigestionHistogram(kvp.Value, digestionParams);
+            var hist = digCalc.GetDigestionHistogram(kvp.Value, digestionParams, out var massHist);
             lock (foldHists)
             {
                 foldHists[kvp.Key] = hist;
+                foldMassHists[kvp.Key] = massHist;
             }
         });
+
+        foldHists = foldHists.OrderBy(kvp => kvp.Key).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        foldMassHists = foldMassHists.OrderBy(kvp => kvp.Key).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         // Aggregate and write CSV
         var allKeys = new SortedSet<int>(targetHist.Keys);
@@ -186,6 +191,30 @@ public class EntrapmentGroupHistogramService(IModificationHistogramCalculator mo
             writer.Write(totalFold);
         }
         writer.WriteLine();
+
+        if (Verbose)
+            Logger.WriteLine($"Wrote digestion histogram to {outputPath}");
+
+        // Aggregate and write CSV
+        allKeys = new SortedSet<int>(targetMassHist.Keys);
+        foreach (var hist in foldMassHists.Values)
+            allKeys.UnionWith(hist.Keys);
+        outputPath = Path.Combine(outputDirectory, $"{entrapmentDbName}_PrecursorMassHistogram.csv");
+        using var writer2 = new StreamWriter(outputPath);
+        writer2.WriteLine($"{GetIdentifier(digestionParams)},Targets," + string.Join(",", foldMassHists.Keys.Select(f => $"Fold{f}")));
+        foreach (var key in allKeys)
+        {
+            writer2.Write(key);
+            writer2.Write(',');
+            writer2.Write(targetMassHist.TryGetValue(key, out var targetCount) ? targetCount : 0);
+            foreach (var fold in foldMassHists.Keys)
+            {
+                writer2.Write(',');
+                var foldHist = foldMassHists[fold];
+                writer2.Write(foldHist.TryGetValue(key, out var foldCount) ? foldCount : 0);
+            }
+            writer2.WriteLine();
+        }
 
         if (Verbose)
             Logger.WriteLine($"Wrote digestion histogram to {outputPath}");
