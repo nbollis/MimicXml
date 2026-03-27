@@ -16,6 +16,7 @@
 | `-m`, `--modHist`        | No       | false   | Generate a histogram of modification frequencies in the entrapment proteins. |
 | `-d`, `--digHist`        | No       | false   | Generate a histogram of digestion products in the entrapment proteins. |
 | `-t`, `--isTopDown`      | No       | true    | Generate entrapment proteins for top-down searches. If false, generates for bottom-up. |
+| `--fasta`              | No       | false   | Keep the entrapment FASTA file alongside the output XML |
 | `--mimicMultFactor`      | No       | 9       | Number of times the database should be multiplied (higher = more entrapment sequences, longer runtime). |
 | `--mimicRetainTerm`      | No       | 0       | Number of terminal residues to retain if running in top-down mode (default: 0 for bottom-up, 4 for top-down). |
 

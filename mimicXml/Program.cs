@@ -30,6 +30,14 @@ public class Program
         return errorCode;
     }
 
+    private static string GetFastaOutputPath(string? outputXmlPath, string inputXmlPath)
+    {
+        string basePath = outputXmlPath ?? inputXmlPath;
+        string dir = Path.GetDirectoryName(basePath) ?? ".";
+        string name = Path.GetFileNameWithoutExtension(basePath);
+        return Path.Combine(dir, $"{name}_Entrapment.fasta");
+    }
+
     private static int Run(CommandLineSettings options)
     {
         options.ValidateCommandLineSettings();
@@ -57,7 +65,7 @@ public class Program
 
         // If entrapment fasta path is null, generate it ourselves. 
         string? tempFastaPath = null;
-        string? tempMimicOutputPath = null;
+        string? mimicOutputPath = null;
         if (options.EntrapmentFastaPath is null)
         {
             Logger.WriteLine("Generating entrapment fasta...");
@@ -66,9 +74,9 @@ public class Program
             var mimic = AppHost.GetService<IMimicExeRunner>();
 
             var fileName = Path.GetFileNameWithoutExtension(options.StartingXmlPath);
-            var tempPath = Path.GetTempPath();
-            tempFastaPath = Path.Combine(tempPath, $"{fileName}_XmlToFasta.fasta");
-            tempMimicOutputPath = Path.Combine(tempPath, $"{fileName}_mimic_output.fasta");
+            var fastaDir = Path.GetTempPath();
+            tempFastaPath = Path.Combine(fastaDir, $"{fileName}_XmlToFasta.fasta");
+            mimicOutputPath = Path.Combine(fastaDir, $"{fileName}_mimic_output.fasta");
 
             // Convert XML to FASTA
             Logger.WriteLine("Converting target XML to FASTA...", 1);
@@ -78,7 +86,7 @@ public class Program
             // Run mimic
             Logger.WriteLine("Running mimic...", 1);
             options.MimicParams.InputFastaPath = tempFastaPath;
-            options.MimicParams.OutputFastaPath = tempMimicOutputPath;
+            options.MimicParams.OutputFastaPath = mimicOutputPath;
             var res = mimic.RunAsync(options.MimicParams).Result;
             options.EntrapmentFastaPath = res.EntrapmentPath;
         }
@@ -88,9 +96,18 @@ public class Program
         Logger.WriteLine("Generating mimic xml...");
         generator.GenerateXml(options.StartingXmlPath, options.EntrapmentFastaPath, options.GenerateModificationHistogram, options.GenerateDigestionProductHistogram, digParams, options.OutputXmlPath);
 
+        // Keep mimic output FASTA if requested
+        if (options.KeepFastaOutput && mimicOutputPath != null)
+        {
+            var keepPath = GetFastaOutputPath(options.OutputXmlPath, options.StartingXmlPath);
+            File.Copy(mimicOutputPath, keepPath, overwrite: true);
+            Logger.WriteLine($"Keeping entrapment FASTA at: {keepPath}");
+        }
+
         // Cleanup temp files if we created them
         cleanup.CleanUpTempFile(tempFastaPath);
-        cleanup.CleanUpTempFile(tempMimicOutputPath);
+        if (!options.KeepFastaOutput)
+            cleanup.CleanUpTempFile(mimicOutputPath);
 
         return 0;
     }

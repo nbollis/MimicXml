@@ -14,6 +14,9 @@ internal class CommandLineSettings
     [Option('e', "entrapmentFasta", Required = false, Default = null, HelpText = "[Optional] Entrapment FASTA file path (.fasta or .fa). If this is not set, an entrapment fasta will be generated using mimic and the mimic specifc parameters")]
     public string? EntrapmentFastaPath { get; set; } = null;
 
+    [Option("fasta", Required = false, Default = false, HelpText = "Keep the entrapment FASTA file alongside the output XML (default: false)")]
+    public bool KeepFastaOutput { get; set; } = false;
+
     [Option('o', "output", Required = false, Default = null, HelpText = "[Optional] Output XML file path (.xml), if not set output will be to the same location as the original xml")]
     public string? OutputXmlPath { get; set; }
 
