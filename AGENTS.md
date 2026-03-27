@@ -124,6 +124,11 @@ Treat it as the operating manual for autonomous edits in this repo.
 - Run formatting check before handoff.
 - In handoff notes, include commands executed and outcomes.
 
+## Serena Guidance
+- Prefer the symbol-level Serena tools (`find_symbol`, `find_referencing_symbols`, `insert_after_symbol`, etc.) for navigation and edits because they deliver IDE-like context that raw text searches lack.
+- Locate symbol definitions with Serena, examine references, then modify via symbol-aware helpers before touching the code; always verify the resulting diff via `git diff` or the equivalent command.
+- Use `Glob`, `Grep`, or `rg` only when searching literal strings/comments, then return to Serena for any structural changes.
+
 ## Completion Checklist
 - Build passes for touched projects.
 - Relevant tests pass (single-test and/or suite as appropriate).
